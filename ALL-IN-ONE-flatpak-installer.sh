@@ -1,9 +1,15 @@
 #!/bin/bash
 
-# A script to check for and install Flatpak, then install a list of applications from a file.
+# A script to check for and install Flatpak, then install a list of applications.
+# Originally written by Gemini
+
 
 # --- Configuration ---
-# The list of apps will be read from a file specified as the first argument to the script.
+# Add the Flatpak application IDs you want to install to this list.
+# You can find application IDs on Flathub: https://flathub.org/
+apps_to_install=(
+  "org.zim_wiki.Zim"
+)
 
 # --- Functions ---
 
@@ -13,6 +19,7 @@ print_message() {
 }
 
 # Function to check for and install Flatpak
+# Checks if flapak is installed, then looks for either apt, dnf or pacman and adds the flatpak support
 install_flatpak() {
   if command -v flatpak &> /dev/null; then
     print_message "Flatpak is already installed."
@@ -36,44 +43,21 @@ install_flatpak() {
   fi
 }
 
-# Function to install Flatpak applications from a file
+# Function to install Flatpak applications
 install_apps() {
-  local app_file="$1"
-  print_message "Installing Flatpak applications from $app_file..."
-
-  # Read the file line by line and install each application
-  while IFS= read -r app || [[ -n "$app" ]]; do
-    # Skip empty lines or lines starting with #
-    if [[ -z "$app" ]] || [[ "$app" == \#* ]]; then
-      continue
-    fi
-
+  print_message "Installing Flatpak applications..."
+  for app in "${apps_to_install[@]}"; do
     if flatpak info "$app" &> /dev/null; then
       print_message "$app is already installed. Skipping."
     else
       print_message "Installing $app..."
       flatpak install -y flathub "$app"
     fi
-  done < "$app_file"
+  done
 }
 
 # --- Main Script ---
-
-# Check if a file was provided as an argument
-if [ -z "$1" ]; then
-  echo "Usage: $0 /path/to/your/apps.txt"
-  exit 1
-fi
-
-app_list_file="$1"
-
-# Check if the file exists
-if [ ! -f "$app_list_file" ]; then
-  echo "Error: Application list file not found at '$app_list_file'"
-  exit 1
-fi
-
 install_flatpak
-install_apps "$app_list_file"
+install_apps
 
 print_message "Script execution finished."
