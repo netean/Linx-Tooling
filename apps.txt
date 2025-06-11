@@ -1,0 +1,11 @@
+# --- Productivity ---
+org.libreoffice.LibreOffice
+com.slack.Slack
+
+# --- Media ---
+org.gimp.GIMP
+org.videolan.VLC
+com.spotify.Client
+
+# --- Utilities ---
+com.mattjakeman.ExtensionManager
