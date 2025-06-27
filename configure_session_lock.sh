@@ -165,9 +165,9 @@ case "$DESKTOP_ENV" in
             # For now, we'll ensure the settings are present.
             # It's safer to ensure the file exists and then use crudini or sed if needed.
             # If the file does not exist, create it with the settings.
-            if [ ! -f "$KSCREENLOCKERRC" ]; {
+            if [ ! -f "$KSCREENLOCKERRC" ]; then
                 echo "Creating $KSCREENLOCKERRC for user $ACTIVE_USER..."
-                sudo -u "$ACTIVE_USER" bash -c "cat << EOF > $KSCREENLOCKERRC
+                sudo -u "$ACTIVE_USER" bash -c "cat << EOF > \"$KSCREENLOCKERRC\"
 [\$Version]
 update_info=kscreenlocker.upd:0.1 kde.screensaver.lockGrace,kscreenlocker.upd:0.2 kscreenlocker.autolock
 
@@ -177,27 +177,30 @@ LockGrace=0
 LockOnResume=true
 Timeout=$((IDLE_DELAY_SECONDS / 60))
 EOF"
-            } else
+            else # File exists, modify it
                 echo "Modifying existing $KSCREENLOCKERRC for user $ACTIVE_USER..."
-                # Use sed to update values if they exist, or append if not.
-                # This is complex with sed. A simpler approach for a script is to ensure sections and keys.
-                # For Timeout under [Daemon]
+
+                # Ensure [Daemon] section and its keys
                 if grep -q '^\s*\[Daemon\]' "$KSCREENLOCKERRC"; then
+                    # Section exists, ensure keys are set
                     sudo -u "$ACTIVE_USER" sed -i "/^\s*\[Daemon\]/,/^\s*\[/s/^\(Timeout\s*=\s*\).*/\1$((IDLE_DELAY_SECONDS / 60))/" "$KSCREENLOCKERRC"
                     if ! grep -A5 '^\s*\[Daemon\]' "$KSCREENLOCKERRC" | grep -q '^\s*Timeout\s*='; then
                          sudo -u "$ACTIVE_USER" sed -i '/^\s*\[Daemon\]/a Timeout=$((IDLE_DELAY_SECONDS / 60))' "$KSCREENLOCKERRC"
                     fi
+
                     sudo -u "$ACTIVE_USER" sed -i "/^\s*\[Daemon\]/,/^\s*\[/s/^\(Autolock\s*=\s*\).*/\1true/" "$KSCREENLOCKERRC"
                      if ! grep -A5 '^\s*\[Daemon\]' "$KSCREENLOCKERRC" | grep -q '^\s*Autolock\s*='; then
                          sudo -u "$ACTIVE_USER" sed -i '/^\s*\[Daemon\]/a Autolock=true' "$KSCREENLOCKERRC"
                     fi
+
                     sudo -u "$ACTIVE_USER" sed -i "/^\s*\[Daemon\]/,/^\s*\[/s/^\(LockGrace\s*=\s*\).*/\10/" "$KSCREENLOCKERRC"
                      if ! grep -A5 '^\s*\[Daemon\]' "$KSCREENLOCKERRC" | grep -q '^\s*LockGrace\s*='; then
                          sudo -u "$ACTIVE_USER" sed -i '/^\s*\[Daemon\]/a LockGrace=0' "$KSCREENLOCKERRC"
                     fi
                 else
+                    # Section does not exist, append it
                     echo "No [Daemon] section in $KSCREENLOCKERRC. Appending..."
-                    sudo -u "$ACTIVE_USER" bash -c "cat << EOF >> $KSCREENLOCKERRC
+                    sudo -u "$ACTIVE_USER" bash -c "cat << EOF >> \"$KSCREENLOCKERRC\"
 
 [Daemon]
 Autolock=true
@@ -206,11 +209,12 @@ LockOnResume=true
 Timeout=$((IDLE_DELAY_SECONDS / 60))
 EOF"
                 fi
-            fi
+            fi # This fi closes the 'if [ ! -f "$KSCREENLOCKERRC" ]' block
+
             echo "KDE Plasma screen lock settings updated in $KSCREENLOCKERRC."
             echo "Changes might require a logout/login or restart of plasmashell for $ACTIVE_USER to take effect."
 
-        else
+        else # This else corresponds to 'if ! command -v kwriteconfig5 ...'
             KCONFIG_TOOL="kwriteconfig5"
             if command -v kwriteconfig6 &> /dev/null; then
                 KCONFIG_TOOL="kwriteconfig6"
