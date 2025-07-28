@@ -52,12 +52,18 @@ install_apps() {
       print_message "$app is already installed. Skipping."
     else
       print_message "Installing $app..."
-      flatpak install -y flathub "$app"
+      flatpak install -y --noninteractive flathub "$app"
     fi
   done < "$app_file"
 }
 
 # --- Main Script ---
+
+# Check if the script is run as root
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run this script as root."
+  exit 1
+fi
 
 # Check if a file was provided as an argument
 if [ -z "$1" ]; then
