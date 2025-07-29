@@ -13,4 +13,8 @@ Run the installer script with path the apps.txt file as an argument
 Tested on:
 Arch (Manjaro)
 Ubuntu (25.04)
+Ubuntu Cinnamon (25.04)
+Kubuntu
+OpenSuse Tumbleweed
+Nobara 42
 
